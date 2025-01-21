@@ -1,0 +1,259 @@
+# Module 1:
+# Classification:
+
+# MANUAL NET ARCHITECTURE
+import tensorflow
+import tensorflow as tf
+print(tf._version_)
+
+import os 
+import glob
+from PIL import Image
+import matplotlib.pyplot as plt
+
+from tensorflow.keras.models import Sequential
+
+from tensorflow.keras.layers import Convolution2D
+from tensorflow.keras.layers import MaxPooling2D
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Activation
+melanoma = 'Dataset/melanoma'
+nevus = 'Dataset/nevus'
+dermatofibroma = 'Dataset/dermatofibroma'
+seborrheickeratosis = 'Dataset/seborrheic keratosis'
+def plot_images(item_dir, n=6):
+    all_item_dir = os.listdir(item_dir)
+    item_files = [os.path.join(item_dir, file) for file in all_item_dir][:n]
+    
+    plt.figure(figsize=(80, 40))
+    for idx, img_path in enumerate(item_files):
+        plt.subplot(3, n, idx+1)
+        img = plt.imread(img_path)
+        plt.imshow(img, cmap='gray')
+        plt.axis('off')
+    
+    plt.tight_layout()
+    
+def image_details_print(data,path):
+    print('======== Images in: ', path)
+    for key,values in data.items():
+        print(key,':\t', values)
+
+
+def images_details(path):
+    files=[f for f in glob.glob(path + "*/.*", recursive=True)]
+    data={}
+    data['Images_count']=len(files)
+    data['Min_width']=10**100
+    data['Max_width']=0
+    data['Min_height']=10**100
+    data['Max_height']=0
+    
+    for f in files:
+        img=Image.open(f)
+        width,height=img.size
+        data['Min_width']=min(width,data['Min_width'])
+        data['Max_width']=max(width, data['Max_width'])
+        data['Min_height']=min(height, data['Min_height'])
+        data['Max_height']=max(height, data['Max_height'])
+        
+    image_details_print(data,path)
+print("")
+print("TRAINING DATA FOR MELANOMA:")
+print("")
+images_details(melanoma)
+print("")
+plot_images(melanoma, 10) 
+print("")
+print("TRAINING DATA FOR NEVUS:")
+print("")
+images_details(nevus)
+print("")
+plot_images(nevus, 10)
+print("")
+print("TRAINING DATA FOR DERMATOFIBROMA:")
+print("")
+images_details(dermatofibroma)
+print("")
+plot_images(dermatofibroma, 10)
+print("")
+print("TRAINING DATA FOR SEBORRHEIC KERATOSIS:")
+print("")
+images_details(seborrheickeratosis)
+print("")
+plot_images(seborrheickeratosis, 10)
+# Define the path to your dataset directory
+dataset_dir = 'Dataset'
+
+# Set the batch size and number of classes
+batch_size = 64
+num_classes = 4
+# Create an ImageDataGenerator for data augmentation and preprocessing
+
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+datagen = ImageDataGenerator(
+    rescale=1./255,
+    shear_range=0.2,
+    zoom_range=0.2,
+    rotation_range=15,
+    width_shift_range=0.1,
+    height_shift_range=0.1,
+    horizontal_flip=True,
+    validation_split=0.2)
+# Load and preprocess the dataset using the ImageDataGenerator
+
+train_generator = datagen.flow_from_directory(
+    dataset_dir,
+    target_size=(224, 224),
+    batch_size=batch_size,
+    class_mode='categorical',
+    subset='training')
+validation_generator = datagen.flow_from_directory(
+    dataset_dir,
+    target_size=(224, 224),
+    batch_size=batch_size,
+    class_mode='categorical',
+    subset='validation')
+
+MODEL=Sequential()
+MODEL.add(Convolution2D(32,(3,3),input_shape=(224,224,3),activation='relu'))
+MODEL.add(MaxPooling2D(pool_size=(2,2)))
+MODEL.add(Flatten())
+MODEL.add(Dense(9, activation='softmax'))
+MODEL.compile(optimizer='rmsprop',loss='categorical_crossentropy',metrics=['accuracy'])
+epochs = 10
+history = MODEL.fit(
+    train_generator,
+    validation_data=validation_generator,
+    epochs=epochs # Add the callbacks here
+)
+import matplotlib.pyplot as plt
+
+def graph():
+    #Plot training & validation accuracy values
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
+    plt.title('Model accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Test'], loc='upper left')
+    plt.show()
+
+graph()
+import matplotlib.pyplot as plt
+
+def graph():
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('Model loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Test'], loc='upper left')
+    plt.show()
+graph()
+
+
+
+# Module 2:
+
+
+# LENET ARCHITECTURE
+import tensorflow
+import tensorflow as tf
+print(tf._version_)
+
+from tensorflow.keras.layers import Conv2D
+from tensorflow.keras.layers import MaxPooling2D
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Activation
+# Create an ImageDataGenerator for data augmentation and preprocessing
+
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+datagen = ImageDataGenerator(
+    rescale=1./255,
+    shear_range=0.2,
+    zoom_range=0.2,
+    rotation_range=15,
+    width_shift_range=0.1,
+    height_shift_range=0.1,
+    horizontal_flip=True,
+    validation_split=0.2)
+# Define the path to your dataset directory
+dataset_dir = 'Dataset'
+
+# Set the batch size and number of classes
+batch_size = 64
+num_classes = 9
+# Load and preprocess the dataset using the ImageDataGenerator
+
+train_generator = datagen.flow_from_directory(
+    dataset_dir,
+    target_size=(224, 224),
+    batch_size=batch_size,
+    class_mode='categorical',
+    subset='training')
+validation_generator = datagen.flow_from_directory(
+    dataset_dir,
+    target_size=(224, 224),
+    batch_size=batch_size,
+    class_mode='categorical',
+    subset='validation')
+
+from tensorflow.keras.models import Sequential
+
+MODEL = Sequential([
+    Conv2D(32, (3, 3), activation='relu', input_shape=(224, 224, 3)),
+    MaxPooling2D((2, 2)),
+    Conv2D(64, (3, 3), activation='relu'),
+    MaxPooling2D((2, 2)),
+    Conv2D(64, (3, 3), activation='relu'),
+    Flatten(),
+    Dense(64, activation='relu'),
+    Dense(num_classes, activation='softmax')])
+
+OPT    = tensorflow.keras.optimizers.Adam(0.001)
+
+MODEL.compile(optimizer=OPT,loss='categorical_crossentropy',metrics=["accuracy", tensorflow.keras.metrics.Precision()])
+MODEL.summary()
+model_path = "LENET.h5"
+
+from keras.callbacks import ModelCheckpoint
+M = ModelCheckpoint(model_path, monitor='accuracy', verbose=1, save_best_only=True)
+epochs = 50
+history = MODEL.fit(
+    train_generator,
+    validation_data=validation_generator,
+    epochs=epochs,
+    callbacks=[M]  # Add the callbacks here
+)
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.figure(figsize=(20, 8))
+plt.plot(history.history['accuracy'])
+
+for i in range(34):
+    if i%5 == 0:
+        plt.annotate(np.round(history.history['accuracy'][i]*100,2),xy=(i,history.history['accuracy'][i]))
+
+plt.title('Model accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.show()
+plt.figure(figsize=(20, 8))
+plt.plot(history.history['loss'])
+
+for i in range(34):
+    if i%5 == 0:
+        plt.annotate(np.round(history.history['loss'][i]*100,2),xy=(i,history.history['loss'][i]))
+
+plt.title('Model Loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.show()
